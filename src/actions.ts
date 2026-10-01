@@ -20,6 +20,9 @@ export type ActionsSchema = {
 	group_play_stop: { options: GroupTargetOptions }
 	group_next: { options: GroupTargetOptions }
 	group_previous: { options: GroupTargetOptions }
+	group_schedule_enable: { options: GroupTargetOptions }
+	group_schedule_disable: { options: GroupTargetOptions }
+	group_schedule_toggle: { options: GroupTargetOptions }
 }
 
 export function UpdateActions(self: ModuleInstance): void {
@@ -92,6 +95,21 @@ export function UpdateActions(self: ModuleInstance): void {
 			'Group: Play previous part',
 			'Plays the previous part in a group (only for groups that play one part at a time)',
 			'playPrev',
+		),
+		group_schedule_enable: groupAction(
+			'Group: Enable schedule',
+			'Enables the schedule of a group (only for groups that are in the Schedule playout mode)',
+			'enableSchedule',
+		),
+		group_schedule_disable: groupAction(
+			'Group: Disable schedule',
+			'Disables the schedule of a group (only for groups that are in the Schedule playout mode)',
+			'disableSchedule',
+		),
+		group_schedule_toggle: groupAction(
+			'Group: Enable / Disable schedule',
+			'Disables the schedule of a group if it is enabled, otherwise enables it (only for groups that are in the Schedule playout mode)',
+			'toggleSchedule',
 		),
 	})
 }

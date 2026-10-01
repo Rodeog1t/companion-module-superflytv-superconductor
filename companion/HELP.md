@@ -29,7 +29,7 @@ For each rundown there are presets for:
 - **Groups**: one button per group. It plays (or stops) the whole group and displays the name of the group, the part that is playing and its time left.
 - **Parts**: one button per part. It plays (or stops) that part and displays its name and timer.
 - **Parts by position**: one button per position in a group, so the buttons follow the changes made in SuperConductor.
-- **Controls**: status, play, stop, pause, next and previous buttons for a group.
+- **Controls**: status, play, stop, pause, next, previous and schedule buttons for a group.
 
 A part can be pointed out in several ways:
 
@@ -44,11 +44,13 @@ Instead of picking a part or a group from the list, you can type its name: `Grou
 
 - Part: Play, Stop, Pause / Resume, Play / Stop
 - Group: Play, Stop, Pause / Resume, Play / Stop, Play next part, Play previous part
+- Group: Enable schedule, Disable schedule, Enable / Disable schedule.
+  These only work on a group that is in the **Schedule** playout mode in SuperConductor, and that is not locked.
 
 **Feedbacks**
 
 - Part: Is playing, Is paused, Is about to end, Is next, Exists, Is disabled
-- Group: Is playing, Is paused, Current part is about to end
+- Group: Is playing, Is paused, Current part is about to end, Schedule is enabled
 - Part: Information and Group: Information. These give a text (a name, a status or a timer).
   Store it in a local variable of the button and use it in the button text, like `$(local:name)\n$(local:time)`.
   The presets are set up this way.

@@ -8,7 +8,7 @@
  *
  *****************************************************************************/
 
-export const PROTOCOL_VERSION = 2
+export const PROTOCOL_VERSION = 3
 export const DEFAULT_PORT = 5505
 
 // ---------------------------------- State ----------------------------------
@@ -33,6 +33,8 @@ export interface CompanionGroup {
 	locked: boolean
 	/** True when the group is played out using a schedule */
 	scheduled: boolean
+	/** True when the schedule of the group is enabled (it only has an effect when the group is scheduled) */
+	scheduleActive: boolean
 
 	parts: CompanionPart[]
 	playout: CompanionGroupPlayout
@@ -111,7 +113,16 @@ export interface MsgPing {
 	t: number
 }
 export type PartCommand = 'playPart' | 'stopPart' | 'pausePart' | 'playStopPart'
-export type GroupCommand = 'playGroup' | 'stopGroup' | 'pauseGroup' | 'playStopGroup' | 'playNext' | 'playPrev'
+export type GroupCommand =
+	| 'playGroup'
+	| 'stopGroup'
+	| 'pauseGroup'
+	| 'playStopGroup'
+	| 'playNext'
+	| 'playPrev'
+	| 'enableSchedule'
+	| 'disableSchedule'
+	| 'toggleSchedule'
 export interface MsgCommand {
 	type: 'command'
 	/** Is echoed back in the reply */

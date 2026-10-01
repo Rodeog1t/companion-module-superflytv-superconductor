@@ -187,6 +187,10 @@ export function getGroupName(group: CompanionGroup): string {
 	if (group.transparent && group.parts.length > 0) return getPartName(group.parts[0])
 	return group.name
 }
+/** True when the group is played out using a schedule, and that schedule is enabled */
+export function isScheduleActive(group: CompanionGroup): boolean {
+	return group.scheduled && group.scheduleActive
+}
 
 /**
  * Calculates the things that change over time for a part.

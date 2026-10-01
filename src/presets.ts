@@ -18,6 +18,7 @@ const COLOR_PAUSED = 0xc08000
 const COLOR_ENDING = 0xd00000
 const COLOR_NEXT = 0x004080
 const COLOR_DISABLED = 0x303030
+const COLOR_SCHEDULE = 0x6000a0
 
 /** How many "by position" buttons to offer for a group, at least */
 const MIN_POSITION_PRESETS = 8
@@ -330,6 +331,21 @@ function getGroupPresets(ref: GroupRef): { [controlId: string]: Preset } {
 			style: { ...baseStyle, text: `PREVIOUS\\n${name}` },
 			steps: [{ down: [{ actionId: 'group_previous', options: target }], up: [] }],
 			feedbacks: [],
+		},
+		schedule: {
+			type: 'simple',
+			name: `Enable / Disable schedule: ${name}`,
+			style: { ...baseStyle, text: `SCHEDULE\\n${name}\\n$(local:countdown)` },
+			steps: [{ down: [{ actionId: 'group_schedule_toggle', options: target }], up: [] }],
+			feedbacks: [{ feedbackId: 'group_schedule_active', options: target, style: { bgcolor: COLOR_SCHEDULE } }],
+			localVariables: [
+				{
+					variableType: 'feedback',
+					variableName: 'countdown',
+					feedbackId: 'group_info',
+					options: { ...target, field: 'countdown' },
+				},
+			],
 		},
 	}
 }

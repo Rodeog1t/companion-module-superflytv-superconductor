@@ -56,6 +56,14 @@ class FakeSuperConductor {
 							nextPartId: 'prtInterview',
 						})
 						this.sendState()
+					} else if (msg.command === 'toggleSchedule') {
+						const group = this.state.rundowns[0].groups[0]
+						if (!group.scheduled) {
+							this.send({ type: 'reply', id: msg.id, ok: false, error: 'Not in the Schedule playout mode' })
+							return
+						}
+						group.scheduleActive = !group.scheduleActive
+						this.sendState()
 					}
 					this.send({ type: 'reply', id: msg.id, ok: true })
 				}
@@ -304,6 +312,43 @@ describe('Module', () => {
 		const commandCount = superConductor.received.length
 		await companion.actions.part_play.callback({ options: nowhere })
 		assert.equal(superConductor.received.length, commandCount)
+	})
+	test('enabling and disabling the schedule of a group', async () => {
+		const main = { group: 'Main' }
+		const scheduleActive = (): boolean =>
+			companion.feedbacks.group_schedule_active.callback({ ...feedbackInfo, options: main })
+		const scheduleInfo = (): string =>
+			companion.feedbacks.group_info.callback({ ...feedbackInfo, options: { ...main, field: 'schedule' } })
+
+		// The group has no schedule:
+		assert.equal(scheduleActive(), false)
+		assert.equal(scheduleInfo(), '')
+		await companion.actions.group_schedule_toggle.callback({ options: main })
+		assert.equal(superConductor.state.rundowns[0].groups[0].scheduleActive, false)
+
+		// The group is set to the Schedule playout mode in SuperConductor:
+		superConductor.state.rundowns[0].groups[0].scheduled = true
+		superConductor.sendState()
+		await waitFor(() => scheduleInfo() === 'off', 'the group to be scheduled')
+		assert.equal(scheduleActive(), false)
+		companion.checkedFeedbacks.length = 0
+
+		await companion.actions.group_schedule_toggle.callback({ options: main })
+		assert.deepEqual(superConductor.received.at(-1), {
+			type: 'command',
+			id: superConductor.received.filter((msg) => msg.type === 'command').length,
+			command: 'toggleSchedule',
+			rundownId: 'show.rundown.json',
+			groupId: 'grpMain',
+		})
+		await waitFor(scheduleActive, 'the schedule to be enabled')
+		assert.ok(companion.checkedFeedbacks.includes('group_schedule_active'))
+		assert.equal(scheduleInfo(), 'on')
+
+		await companion.actions.group_schedule_toggle.callback({ options: main })
+		await waitFor(() => !scheduleActive(), 'the schedule to be disabled')
+
+		assert.equal(companion.presets.group_grpMain_schedule.steps[0].down[0].actionId, 'group_schedule_toggle')
 	})
 	test('new parts in SuperConductor show up', async () => {
 		superConductor.state.rundowns[0].groups[0].parts.push({

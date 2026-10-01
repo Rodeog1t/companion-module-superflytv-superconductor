@@ -15,7 +15,7 @@ import {
 	type GroupTargetOptions,
 	type PartTargetOptions,
 } from './options.js'
-import { getGroupLive, getPartLive } from './state.js'
+import { getGroupLive, getPartLive, isScheduleActive } from './state.js'
 
 export type FeedbacksSchema = {
 	part_playing: { type: 'boolean'; options: PartTargetOptions }
@@ -29,6 +29,7 @@ export type FeedbacksSchema = {
 	group_playing: { type: 'boolean'; options: GroupTargetOptions }
 	group_paused: { type: 'boolean'; options: GroupTargetOptions }
 	group_ending: { type: 'boolean'; options: GroupTargetOptions & { seconds: number } }
+	group_schedule_active: { type: 'boolean'; options: GroupTargetOptions }
 	group_info: { type: 'value'; options: GroupTargetOptions & { field: string } }
 }
 
@@ -44,6 +45,7 @@ export const STATE_FEEDBACKS: StringKeys<FeedbacksSchema>[] = [
 	'group_playing',
 	'group_paused',
 	'group_ending',
+	'group_schedule_active',
 	'group_info',
 ]
 /** The feedbacks that change as time passes, while something is playing */
@@ -56,6 +58,7 @@ const COLOR_PAUSED = 0xc08000
 const COLOR_ENDING = 0xd00000
 const COLOR_NEXT = 0x004080
 const COLOR_DISABLED = 0x303030
+const COLOR_SCHEDULE = 0x6000a0
 
 export function UpdateFeedbacks(self: ModuleInstance): void {
 	const store = self.store
@@ -194,6 +197,18 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 				if (!ref) return false
 				const live = getGroupLive(ref.group, self.now())
 				return isEnding(live.status, live.timeLeft, feedback.options.seconds)
+			},
+		},
+		group_schedule_active: {
+			type: 'boolean',
+			name: 'Group: Schedule is enabled',
+			description: 'True when the group is in the Schedule playout mode and its schedule is enabled',
+			defaultStyle: { bgcolor: COLOR_SCHEDULE, color: COLOR_WHITE },
+			options: groupTargetFields(store),
+			callback: (feedback) => {
+				const ref = store.resolveGroup(feedback.options.group)
+				if (!ref) return false
+				return isScheduleActive(ref.group)
 			},
 		},
 		group_info: {

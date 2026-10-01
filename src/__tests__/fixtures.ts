@@ -38,6 +38,7 @@ export function makeGroup(
 		disabled: false,
 		locked: false,
 		scheduled: false,
+		scheduleActive: false,
 		parts,
 		playout: makePlayout(),
 		...extra,

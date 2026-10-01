@@ -1,5 +1,13 @@
 import type { DropdownChoice } from '@companion-module/base'
-import { getGroupLive, getGroupName, getPartLive, getPartName, type GroupRef, type PartRef } from './state.js'
+import {
+	getGroupLive,
+	getGroupName,
+	getPartLive,
+	getPartName,
+	isScheduleActive,
+	type GroupRef,
+	type PartRef,
+} from './state.js'
 import { formatDuration, toSeconds } from './time.js'
 
 /******************************************************************************
@@ -47,6 +55,7 @@ export type GroupField =
 	| 'time_left_seconds'
 	| 'group_time_left'
 	| 'countdown'
+	| 'schedule'
 	| 'on_air_count'
 
 export const GROUP_FIELD_CHOICES: DropdownChoice<GroupField>[] = [
@@ -58,6 +67,7 @@ export const GROUP_FIELD_CHOICES: DropdownChoice<GroupField>[] = [
 	{ id: 'time_left_seconds', label: 'Time left of the part that is playing, in seconds' },
 	{ id: 'group_time_left', label: 'Time left until the group stops playing' },
 	{ id: 'countdown', label: 'Time until the group starts playing (when scheduled)' },
+	{ id: 'schedule', label: 'Schedule (on or off, empty when the group has no schedule)' },
 	{ id: 'on_air_count', label: 'Number of parts that are playing' },
 ]
 
@@ -115,6 +125,7 @@ export function getGroupInfo(ref: GroupRef | undefined, field: GroupField, now: 
 	const { group } = ref
 
 	if (field === 'name') return getGroupName(group)
+	if (field === 'schedule') return group.scheduled ? (isScheduleActive(group) ? 'on' : 'off') : ''
 
 	const live = getGroupLive(group, now)
 	switch (field) {
