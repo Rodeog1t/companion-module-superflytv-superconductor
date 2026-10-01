@@ -1,0 +1,51 @@
+# companion-module-superflytv-superconductor
+
+A [Bitfocus Companion](https://bitfocus.io/companion) module that controls the playout of
+[SuperConductor](https://github.com/SuperFlyTV/SuperConductor) and shows names, statuses and timers on the buttons.
+
+See [companion/HELP.md](./companion/HELP.md) for how to use it.
+
+## Requirements
+
+- Companion 5.0 or later (the module uses version 2.1 of the module API).
+- A build of SuperConductor that has the **Companion API** (the `feat/companion-control` branch).
+  The API is off by default, enable it in SuperConductor on the home page → **Bridges** → **Companion**.
+
+## How it works
+
+The module connects to SuperConductor over a WebSocket (port 5505 by default) and exchanges JSON messages.
+The protocol is described in [src/protocol.ts](./src/protocol.ts), which is a copy of
+`apps/app/src/lib/companion/protocol.ts` in SuperConductor. Keep the two in sync.
+
+There are two ways to make buttons, and they can be mixed:
+
+|                      | Defined in Companion                         | Defined in SuperConductor                         |
+| -------------------- | -------------------------------------------- | ------------------------------------------------- |
+| What a button does   | Actions of this module                       | Triggers and button areas in SuperConductor       |
+| How a button looks   | Feedbacks and variables, styled in Companion | Decided by SuperConductor, like on a Stream Deck  |
+| Follows the rundown  | With "the part at a position in a group"     | Yes, through button areas                         |
+| Set up in the module | Nothing, it is always available              | Enable "Provide a button panel to SuperConductor" |
+
+SuperConductor sends the playout state as absolute timestamps and only when it changes.
+The timers are counted locally by the module, using a clock offset that is measured with pings,
+so they stay correct when Companion and SuperConductor run on different computers.
+
+## Development
+
+Node.js 22 and Yarn 4 are required.
+
+```sh
+yarn install
+yarn build      # compile to dist/
+yarn test       # unit tests
+yarn lint
+yarn package    # build the .tgz that can be imported in Companion
+```
+
+To try a local build, point Companion at the folder that contains this repository
+(Companion launcher → cog wheel → Developer modules path), or import the packaged `.tgz`
+on the Modules page of Companion.
+
+## License
+
+MIT, see [LICENSE](./LICENSE).
