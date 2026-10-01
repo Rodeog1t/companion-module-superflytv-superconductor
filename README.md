@@ -5,9 +5,22 @@ A [Bitfocus Companion](https://bitfocus.io/companion) module that controls the p
 
 See [companion/HELP.md](./companion/HELP.md) for how to use it.
 
+## Screenshots
+
+The presets follow the rundowns of SuperConductor: there are buttons for each group, each part,
+each position in a group, and the controls of a group. Drag them onto a button.
+
+![The presets of the module, with buttons for the groups, the parts and the controls](./doc/img/presets.png)
+
+The names, statuses and timers are given by the **Information** feedbacks, which store a text
+in a local variable of the button.
+
+![The Group: Information feedback, with the list of the information it can give](./doc/img/variables.png)
+
 ## Requirements
 
-- Companion 5.0 or later (the module uses version 2.1 of the module API).
+- Companion 5.0.5 or later (the module uses version 2.1 of the module API).
+  Earlier 5.0 versions load the module, but they drop the local variables of the presets, so the buttons display `$NA`.
 - A build of SuperConductor that has the **Companion API** (the `feat/companion-control` branch).
   The API is off by default, enable it in SuperConductor on the home page → **Bridges** → **Companion**.
 

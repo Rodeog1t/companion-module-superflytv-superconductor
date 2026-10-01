@@ -7,6 +7,8 @@ Controls the playout of [SuperConductor](https://github.com/SuperFlyTV/SuperCond
 This module needs a version of SuperConductor that has the **Companion API**.
 Enable it in SuperConductor: the home page → **Bridges** → **Companion**, and note the port (5505 by default).
 
+It also needs Companion 5.0.5 or later. On earlier versions the buttons made from the presets display `$NA`, because their local variables are not created.
+
 ### Configuration
 
 - **SuperConductor host**: The address of the computer running SuperConductor (`127.0.0.1` if it is this one).
