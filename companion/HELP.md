@@ -11,14 +11,23 @@ Enable it in SuperConductor: the home page → **Bridges** → **Companion**, an
 
 - **SuperConductor host**: The address of the computer running SuperConductor (`127.0.0.1` if it is this one).
 - **Port**: The port of the Companion API.
-- **Provide a button panel to SuperConductor**: See "Buttons defined in SuperConductor" below.
 
-### Two ways to make buttons
+### Making buttons
 
-#### 1. Buttons defined in Companion
+The buttons are defined in Companion, so the Stream Deck (or any other surface) stays under the control of Companion.
+Do not enable the same Stream Deck in SuperConductor: SuperConductor would take it over and Companion could no longer draw on it.
 
 You choose what each button does and how it looks, using the actions, feedbacks and variables of this module.
 The easiest way to start is to drag a preset onto a button, then change it as you like.
+
+**Presets**
+
+For each rundown there are presets for:
+
+- **Groups**: one button per group. It plays (or stops) the whole group and displays the name of the group, the part that is playing and its time left.
+- **Parts**: one button per part. It plays (or stops) that part and displays its name and timer.
+- **Parts by position**: one button per position in a group, so the buttons follow the changes made in SuperConductor.
+- **Controls**: status, play, stop, pause, next and previous buttons for a group.
 
 A part can be pointed out in several ways:
 
@@ -47,15 +56,3 @@ Instead of picking a part or a group from the list, you can type its name: `Grou
 For every group and every part there are variables with its name, status and timers.
 They are listed in the Variables tab of the connection.
 Timers are formatted as `m:ss` (or `h:mm:ss`), there are also variables with the time in seconds for use in expressions.
-
-#### 2. Buttons defined in SuperConductor
-
-Enable **Provide a button panel to SuperConductor** in the configuration.
-A button panel then shows up in the top bar of SuperConductor, just like a Stream Deck connected to SuperConductor does.
-In SuperConductor you assign triggers to parts and define button areas for groups on that panel, and SuperConductor decides
-what the keys display.
-
-In Companion, drag the presets in the **Button panel** section onto your buttons, one preset per key.
-Key 0 is the top left key of the panel, then they are counted row by row.
-
-Both ways can be used at the same time.

@@ -33,6 +33,8 @@ export function UpdatePresets(self: ModuleInstance): void {
 		const groups: CompanionPresetGroup<ModuleSchema>[] = []
 		/** The parts that are not in a (visible) group */
 		const singleParts: string[] = []
+		/** One button per group, that controls the group as a whole */
+		const groupPresetIds: string[] = []
 
 		for (const group of rundown.groups) {
 			const groupRef: GroupRef = { rundown, group }
@@ -47,6 +49,10 @@ export function UpdatePresets(self: ModuleInstance): void {
 				})
 				continue
 			}
+
+			// One button for the group as a whole:
+			presets[`group_${groupId}`] = getGroupPreset(groupRef)
+			groupPresetIds.push(`group_${groupId}`)
 
 			// One button per part:
 			const partPresetIds: string[] = []
@@ -101,6 +107,16 @@ export function UpdatePresets(self: ModuleInstance): void {
 			})
 		}
 
+		if (groupPresetIds.length > 0) {
+			groups.unshift({
+				id: `rundown_${sanitizeId(rundown.id)}_groups`,
+				type: 'simple',
+				name: 'Groups',
+				description:
+					'Each button plays (or stops) a whole group, and displays the part that is playing in it and its time left.',
+				presets: groupPresetIds,
+			})
+		}
 		if (singleParts.length > 0) {
 			groups.unshift({
 				id: `rundown_${sanitizeId(rundown.id)}_single_parts`,
@@ -117,30 +133,6 @@ export function UpdatePresets(self: ModuleInstance): void {
 				definitions: groups,
 			})
 		}
-	}
-
-	if (self.surfaceKeyCount > 0) {
-		const keyPresetIds: string[] = []
-		for (let key = 0; key < self.surfaceKeyCount; key++) {
-			const presetId = `surface_key_${key}`
-			presets[presetId] = getSurfaceKeyPreset(key)
-			keyPresetIds.push(presetId)
-		}
-		structure.push({
-			id: 'surface',
-			name: 'Button panel',
-			description:
-				'Buttons that are defined in SuperConductor: assign triggers and button areas to the keys of the button panel there, like for a Stream Deck.',
-			definitions: [
-				{
-					id: 'surface_keys',
-					type: 'simple',
-					name: `Keys (${self.config.surfaceColumns} columns, ${self.config.surfaceRows} rows)`,
-					description: 'Key 0 is the top left one, then they are counted row by row.',
-					presets: keyPresetIds,
-				},
-			],
-		})
 	}
 
 	self.setPresetDefinitions(structure, presets)
@@ -191,6 +183,52 @@ function getPartPreset(name: string, target: PartTargetOptions): Preset {
 				variableName: 'time',
 				feedbackId: 'part_info',
 				options: { ...target, field: 'time' },
+			},
+		],
+	}
+}
+/** A button that plays/stops a whole group, and displays its name, the part that is playing and its timer */
+function getGroupPreset(ref: GroupRef): Preset {
+	const target: GroupTargetOptions = { group: getGroupReference(ref) }
+	return {
+		type: 'simple',
+		name: `Play / Stop group: ${getGroupName(ref.group)}`,
+		style: {
+			text: '$(local:name)\\n$(local:current)\\n$(local:time)',
+			size: 'auto',
+			color: COLOR_WHITE,
+			bgcolor: COLOR_BLACK,
+		},
+		steps: [
+			{
+				down: [{ actionId: 'group_play_stop', options: target }],
+				up: [],
+			},
+		],
+		// Note: The feedbacks further down take precedence over the ones above them
+		feedbacks: [
+			{ feedbackId: 'group_paused', options: target, style: { bgcolor: COLOR_PAUSED } },
+			{ feedbackId: 'group_playing', options: target, style: { bgcolor: COLOR_PLAYING } },
+			{ feedbackId: 'group_ending', options: { ...target, seconds: 10 }, style: { bgcolor: COLOR_ENDING } },
+		],
+		localVariables: [
+			{
+				variableType: 'feedback',
+				variableName: 'name',
+				feedbackId: 'group_info',
+				options: { ...target, field: 'name' },
+			},
+			{
+				variableType: 'feedback',
+				variableName: 'current',
+				feedbackId: 'group_info',
+				options: { ...target, field: 'current_part' },
+			},
+			{
+				variableType: 'feedback',
+				variableName: 'time',
+				feedbackId: 'group_info',
+				options: { ...target, field: 'time_left' },
 			},
 		],
 	}
@@ -293,28 +331,5 @@ function getGroupPresets(ref: GroupRef): { [controlId: string]: Preset } {
 			steps: [{ down: [{ actionId: 'group_previous', options: target }], up: [] }],
 			feedbacks: [],
 		},
-	}
-}
-/** A button that is a key on the button panel: SuperConductor decides what it does and how it looks */
-function getSurfaceKeyPreset(key: number): Preset {
-	return {
-		type: 'simple',
-		name: `Key ${key}`,
-		style: {
-			text: '',
-			size: 'auto',
-			color: COLOR_WHITE,
-			bgcolor: COLOR_BLACK,
-		},
-		previewStyle: {
-			text: `Key ${key}`,
-		},
-		steps: [
-			{
-				down: [{ actionId: 'surface_key', options: { key, pressed: true } }],
-				up: [{ actionId: 'surface_key', options: { key, pressed: false } }],
-			},
-		],
-		feedbacks: [{ feedbackId: 'surface_key', options: { key } }],
 	}
 }

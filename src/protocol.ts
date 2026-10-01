@@ -8,12 +8,8 @@
  *
  *****************************************************************************/
 
-export const PROTOCOL_VERSION = 1
+export const PROTOCOL_VERSION = 2
 export const DEFAULT_PORT = 5505
-
-/** Max size of a virtual button panel */
-export const SURFACE_MAX_COLUMNS = 32
-export const SURFACE_MAX_ROWS = 32
 
 // ---------------------------------- State ----------------------------------
 
@@ -99,78 +95,14 @@ export interface CompanionPlayhead {
 	fromSchedule: boolean
 }
 
-// -------------------------------- KeyDisplay --------------------------------
-
-/** What SuperConductor wants to display on a key of a button panel */
-export interface KeyDisplay {
-	/** How much the key should strive for the user's attention */
-	attentionLevel: AttentionLevel
-
-	/** Special case, is set when normal key-operations are intercepted (disabled) */
-	intercept?: 'areaDefine'
-
-	area?: {
-		/** If the area is currently being defined */
-		areaInDefinition: boolean
-		/** Color of the area */
-		color: string
-		/** Label/Name of the area */
-		areaLabel: string
-		/** Label of this key in the area */
-		keyLabel: string
-		/** A unique id for this area */
-		areaId: string
-	}
-
-	/** The most important text */
-	header?: {
-		long: string
-		/** The shortened version (max 10 characters is recommended)*/
-		short?: string
-	}
-	/** Informational text */
-	info?: {
-		long: string
-		short?: string
-		/** A text representing an analog value */
-		analogValue?: string
-	}
-
-	/** base64-encoded thumbnail */
-	thumbnail?: string
-}
-export const AttentionLevel = {
-	/** Actively trying to be ignored */
-	IGNORE: -1,
-	/** Neutral */
-	NEUTRAL: 0,
-	/** User should notice me, if looking for me */
-	INFO: 1,
-	/** User should notice me easilly, even if not looking */
-	NOTIFY: 2,
-	/** User should notice me immediately */
-	ALERT: 3,
-} as const
-export type AttentionLevel = (typeof AttentionLevel)[keyof typeof AttentionLevel]
-
 // ---------------------------- Messages: To server ---------------------------
 
-export type ClientMessage = MsgHello | MsgPing | MsgCommand | MsgKey
+export type ClientMessage = MsgHello | MsgPing | MsgCommand
 
 /** Must be the first message sent by the client */
 export interface MsgHello {
 	type: 'hello'
 	protocolVersion: number
-	/** If set, the client provides a virtual button panel */
-	surface?: Surface | null
-}
-export interface Surface {
-	/** Identifies the button panel. Button areas and triggers are tied to this id. */
-	id: string
-	/** Display name of the button panel */
-	name?: string
-	columns: number
-	rows: number
 }
 /** Used to measure the difference between the clocks of the client and the server */
 export interface MsgPing {
@@ -190,17 +122,10 @@ export interface MsgCommand {
 	/** Required for the part commands */
 	partId?: string
 }
-/** A key on the virtual button panel has been pressed or released */
-export interface MsgKey {
-	type: 'key'
-	/** Index of the key, counted row by row from the top left (which is 0) */
-	key: number
-	down: boolean
-}
 
 // --------------------------- Messages: From server --------------------------
 
-export type ServerMessage = MsgWelcome | MsgPong | MsgState | MsgReply | MsgKeyDisplay | MsgError
+export type ServerMessage = MsgWelcome | MsgPong | MsgState | MsgReply | MsgError
 
 /** Reply to the hello */
 export interface MsgWelcome {
@@ -227,12 +152,6 @@ export interface MsgReply {
 	id: number
 	ok: boolean
 	error?: string
-}
-/** What to display on a key of the virtual button panel */
-export interface MsgKeyDisplay {
-	type: 'keyDisplay'
-	key: number
-	display: KeyDisplay
 }
 export interface MsgError {
 	type: 'error'

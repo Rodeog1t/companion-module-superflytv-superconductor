@@ -2,13 +2,7 @@ import { after, before, describe, test } from 'node:test'
 import assert from 'node:assert/strict'
 import { WebSocketServer, type WebSocket } from 'ws'
 import ModuleInstance from '../main.js'
-import {
-	AttentionLevel,
-	PROTOCOL_VERSION,
-	type ClientMessage,
-	type CompanionState,
-	type ServerMessage,
-} from '../protocol.js'
+import { PROTOCOL_VERSION, type ClientMessage, type CompanionState, type ServerMessage } from '../protocol.js'
 import { makePlayout, makeState } from './fixtures.js'
 
 /******************************************************************************
@@ -64,12 +58,6 @@ class FakeSuperConductor {
 						this.sendState()
 					}
 					this.send({ type: 'reply', id: msg.id, ok: true })
-				} else if (msg.type === 'key' && msg.down) {
-					this.send({
-						type: 'keyDisplay',
-						key: msg.key,
-						display: { attentionLevel: AttentionLevel.INFO, header: { long: 'Stop Intro' }, info: { long: '0:00:09' } },
-					})
 				}
 			})
 		})
@@ -177,14 +165,7 @@ describe('Module', () => {
 
 		companion = makeFakeCompanion()
 		instance = new ModuleInstance(companion)
-		await instance.init({
-			host: '127.0.0.1',
-			port: superConductor.port,
-			surfaceEnabled: true,
-			surfaceId: 'test',
-			surfaceColumns: 2,
-			surfaceRows: 1,
-		})
+		await instance.init({ host: '127.0.0.1', port: superConductor.port })
 		await waitFor(() => companion.status === 'ok' && 'part_prtIntro_name' in companion.variables, 'the first state')
 	})
 	after(async () => {
@@ -192,12 +173,8 @@ describe('Module', () => {
 		superConductor.close()
 	})
 
-	test('says hello and offers the button panel', () => {
-		assert.deepEqual(superConductor.received[0], {
-			type: 'hello',
-			protocolVersion: PROTOCOL_VERSION,
-			surface: { id: 'test', name: 'Companion (superconductor)', columns: 2, rows: 1 },
-		})
+	test('says hello', () => {
+		assert.deepEqual(superConductor.received[0], { type: 'hello', protocolVersion: PROTOCOL_VERSION })
 	})
 	test('lists the parts and groups to choose from', () => {
 		const fields = companion.actions.part_play.options
@@ -219,13 +196,16 @@ describe('Module', () => {
 		assert.equal(companion.variables.part_prtIntro_time, '0:10')
 		assert.equal(companion.variables.group_grpMain_status, 'stopped')
 		assert.equal(companion.variables.group_grpMain_current_part, '')
-		assert.equal(companion.variables.key_1_header, '')
 	})
 	test('the presets only use actions and feedbacks that exist', () => {
 		assert.deepEqual(
 			companion.presetStructure.map((section) => section.name),
-			['Show', 'Button panel'],
+			['Show'],
 		)
+		// There is a button for the group as a whole (but not for the group that is hidden in SuperConductor):
+		const groupsCategory = companion.presetStructure[0].definitions.find((group: any) => group.name === 'Groups')
+		assert.deepEqual(groupsCategory.presets, ['group_grpMain'])
+		assert.equal(companion.presets.group_grpMain.steps[0].down[0].actionId, 'group_play_stop')
 		// Every preset in the structure is defined:
 		const presetIds: string[] = companion.presetStructure.flatMap((section) =>
 			section.definitions.flatMap((group: any) => group.presets),
@@ -325,30 +305,6 @@ describe('Module', () => {
 		await companion.actions.part_play.callback({ options: nowhere })
 		assert.equal(superConductor.received.length, commandCount)
 	})
-	test('the button panel', async () => {
-		await companion.actions.surface_key.callback({ options: { key: 1, pressed: true } })
-		await waitFor(() => companion.variables.key_1_header === 'Stop Intro', 'the key display')
-		assert.deepEqual(superConductor.received.at(-1), { type: 'key', key: 1, down: true })
-		assert.equal(companion.variables.key_1_info, '0:00:09')
-		assert.ok(companion.checkedFeedbacks.includes('surface_key'))
-
-		const image = { width: 72, height: 72 }
-		const style = await companion.feedbacks.surface_key.callback({ ...feedbackInfo, options: { key: 1 }, image })
-		assert.equal(style.text, 'Stop Intro\n0:00:09')
-		assert.ok(style.imageBuffer)
-		// SuperConductor hasn't said anything about the other key:
-		assert.deepEqual(
-			await companion.feedbacks.surface_key.callback({ ...feedbackInfo, options: { key: 0 }, image }),
-			{},
-		)
-
-		await companion.actions.surface_key.callback({ options: { key: 1, pressed: false } })
-		await waitFor(() => {
-			const last = superConductor.received.at(-1)
-			return last?.type === 'key' && !last.down
-		}, 'the key release')
-		assert.deepEqual(superConductor.received.at(-1), { type: 'key', key: 1, down: false })
-	})
 	test('new parts in SuperConductor show up', async () => {
 		superConductor.state.rundowns[0].groups[0].parts.push({
 			id: 'prtNew',
@@ -375,7 +331,6 @@ describe('Module', () => {
 
 		assert.equal(companion.variables.part_prtIntro_status, '')
 		assert.equal(companion.variables.part_prtIntro_time, '')
-		assert.equal(companion.variables.key_1_header, '')
 		assert.ok(companion.checkedFeedbacks.includes('*'))
 		assert.equal(await companion.feedbacks.part_playing.callback({ ...feedbackInfo, options: introById }), false)
 		// The parts can still be chosen when editing buttons:

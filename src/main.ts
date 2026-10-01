@@ -4,15 +4,14 @@ import {
 	type CompanionVariableValues,
 	type SomeCompanionConfigField,
 } from '@companion-module/base'
-import { GetConfigFields, getSurface, sanitizeConfig, type ModuleConfig } from './config.js'
+import { GetConfigFields, sanitizeConfig, type ModuleConfig } from './config.js'
 import { Connection } from './connection.js'
 import { UpgradeScripts } from './upgrades.js'
 import { UpdateActions, type ActionsSchema } from './actions.js'
 import { STATE_FEEDBACKS, TIME_FEEDBACKS, UpdateFeedbacks, type FeedbacksSchema } from './feedbacks.js'
 import { UpdatePresets } from './presets.js'
-import type { CompanionState, GroupCommand, KeyDisplay, PartCommand } from './protocol.js'
+import type { CompanionState, GroupCommand, PartCommand } from './protocol.js'
 import { getTimeSignature, StateStore } from './state.js'
-import { SurfaceKeys } from './surface.js'
 import { getVariableDefinitions, getVariableValues, type VariablesSchema } from './variables.js'
 
 /** How often to check if the timers need to be updated */
@@ -33,14 +32,11 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 
 	/** The rundowns and the playout state of SuperConductor */
 	readonly store = new StateStore()
-	/** What SuperConductor wants to display on the keys of the button panel */
-	readonly surfaceKeys = new SurfaceKeys()
 	/** The version of the SuperConductor we're connected to */
 	appVersion = ''
 
 	private connection: Connection | null = null
 	private tickInterval: NodeJS.Timeout | null = null
-	private updateSurfaceTimeout: NodeJS.Timeout | null = null
 
 	/** Used to tell when the actions, feedbacks, presets and variables need to be defined again */
 	private definitionsSignature: string | null = null
@@ -67,8 +63,6 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	async destroy(): Promise<void> {
 		if (this.tickInterval) clearInterval(this.tickInterval)
 		this.tickInterval = null
-		if (this.updateSurfaceTimeout) clearTimeout(this.updateSurfaceTimeout)
-		this.updateSurfaceTimeout = null
 
 		this.connection?.close()
 		this.connection = null
@@ -90,11 +84,6 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	now(): number {
 		return this.connection?.now() ?? Date.now()
 	}
-	/** Number of keys on the button panel. 0 if there is no button panel */
-	get surfaceKeyCount(): number {
-		if (!this.config.surfaceEnabled) return 0
-		return this.config.surfaceColumns * this.config.surfaceRows
-	}
 
 	/** Sends a playout command to SuperConductor. Problems are logged. */
 	async sendCommand(
@@ -108,18 +97,6 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 			this.log('warn', `Command "${command}" failed: ${e instanceof Error ? e.message : e}`)
 		}
 	}
-	/** Tells SuperConductor that a key on the button panel was pressed or released. Problems are logged. */
-	sendKey(key: number, down: boolean): void {
-		try {
-			if (!this.config.surfaceEnabled) {
-				throw new Error('The button panel is not enabled in the configuration of the connection')
-			}
-			if (!this.connection) throw new Error('Not connected to SuperConductor')
-			this.connection.sendKey(key, down)
-		} catch (e) {
-			this.log('warn', `Button panel key ${key} failed: ${e instanceof Error ? e.message : e}`)
-		}
-	}
 
 	private setupConnection(): void {
 		this.connection?.close()
@@ -130,7 +107,6 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 			{
 				host: this.config.host,
 				port: this.config.port,
-				surface: getSurface(this.config, this.label),
 			},
 			{
 				onStatus: (status, message) => {
@@ -157,10 +133,6 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 					if (this.connection !== connection) return
 					this.onState(state)
 				},
-				onKeyDisplay: (key, display) => {
-					if (this.connection !== connection) return
-					this.onKeyDisplay(key, display)
-				},
 				onError: (message) => {
 					if (this.connection !== connection) return
 					this.log('warn', `SuperConductor reported: ${message}`)
@@ -178,19 +150,6 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.updateVariables()
 		this.checkFeedbacks(STATE_FEEDBACKS[0], ...STATE_FEEDBACKS.slice(1))
 	}
-	private onKeyDisplay(key: number, display: KeyDisplay): void {
-		this.hasData = true
-		this.surfaceKeys.set(key, display)
-
-		// Many keys are often updated at the same time, so handle them together:
-		if (!this.updateSurfaceTimeout) {
-			this.updateSurfaceTimeout = setTimeout(() => {
-				this.updateSurfaceTimeout = null
-				this.updateVariables()
-				this.checkFeedbacks('surface_key')
-			}, 10)
-		}
-	}
 	/** Called when there is no connection to SuperConductor: nothing is known about the playout */
 	private onDisconnected(): void {
 		// Note: The definitions are not updated here, so that the buttons can still be edited
@@ -199,7 +158,6 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 		this.hasData = false
 
 		this.store.clear()
-		this.surfaceKeys.clear()
 		this.appVersion = ''
 		this.timeSignature = ''
 
@@ -225,7 +183,6 @@ export default class ModuleInstance extends InstanceBase<ModuleSchema> {
 	 */
 	private updateDefinitions(): void {
 		const signature = JSON.stringify({
-			surface: this.config.surfaceEnabled ? [this.config.surfaceColumns, this.config.surfaceRows] : null,
 			rundowns: this.store
 				.getState()
 				.rundowns.map((rundown) => [

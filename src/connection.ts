@@ -4,10 +4,8 @@ import {
 	type ClientMessage,
 	type CompanionState,
 	type GroupCommand,
-	type KeyDisplay,
 	type PartCommand,
 	type ServerMessage,
-	type Surface,
 } from './protocol.js'
 
 /** How long to wait before trying to connect again */
@@ -24,15 +22,12 @@ export type ConnectionStatus = 'connecting' | 'connected' | 'disconnected'
 export interface ConnectionOptions {
 	host: string
 	port: number
-	/** The virtual button panel to provide, if any */
-	surface: Surface | null
 }
 export interface ConnectionCallbacks {
 	onStatus: (status: ConnectionStatus, message?: string) => void
 	/** Called when connected, before the first state */
 	onConnected: (appVersion: string) => void
 	onState: (state: CompanionState) => void
-	onKeyDisplay: (key: number, display: KeyDisplay) => void
 	/** Called when SuperConductor reports a problem that isn't tied to a command */
 	onError: (message: string) => void
 }
@@ -100,11 +95,6 @@ export class Connection {
 			this.send({ type: 'command', id, command, ...target })
 		})
 	}
-	/** Reports that a key on the virtual button panel has been pressed or released */
-	sendKey(key: number, down: boolean): void {
-		if (!this.isConnected) throw new Error('Not connected to SuperConductor')
-		this.send({ type: 'key', key, down })
-	}
 
 	private connect() {
 		if (this.closed) return
@@ -126,7 +116,7 @@ export class Connection {
 
 		ws.on('open', () => {
 			if (this.ws !== ws) return
-			this.send({ type: 'hello', protocolVersion: PROTOCOL_VERSION, surface: this.options.surface })
+			this.send({ type: 'hello', protocolVersion: PROTOCOL_VERSION })
 		})
 		ws.on('message', (data) => {
 			if (this.ws !== ws) return
@@ -220,9 +210,6 @@ export class Connection {
 			}
 			case 'state':
 				this.callbacks.onState(msg.state)
-				break
-			case 'keyDisplay':
-				this.callbacks.onKeyDisplay(msg.key, msg.display)
 				break
 			case 'reply': {
 				const pending = this.pendingCommands.get(msg.id)

@@ -17,14 +17,8 @@ The module connects to SuperConductor over a WebSocket (port 5505 by default) an
 The protocol is described in [src/protocol.ts](./src/protocol.ts), which is a copy of
 `apps/app/src/lib/companion/protocol.ts` in SuperConductor. Keep the two in sync.
 
-There are two ways to make buttons, and they can be mixed:
-
-|                      | Defined in Companion                         | Defined in SuperConductor                         |
-| -------------------- | -------------------------------------------- | ------------------------------------------------- |
-| What a button does   | Actions of this module                       | Triggers and button areas in SuperConductor       |
-| How a button looks   | Feedbacks and variables, styled in Companion | Decided by SuperConductor, like on a Stream Deck  |
-| Follows the rundown  | With "the part at a position in a group"     | Yes, through button areas                         |
-| Set up in the module | Nothing, it is always available              | Enable "Provide a button panel to SuperConductor" |
+The buttons are defined in Companion: the module provides actions, feedbacks, variables and presets
+(per group, per part and per position in a group), and Companion draws the buttons.
 
 SuperConductor sends the playout state as absolute timestamps and only when it changes.
 The timers are counted locally by the module, using a clock offset that is measured with pings,
@@ -39,7 +33,7 @@ yarn install
 yarn build      # compile to dist/
 yarn test       # unit tests
 yarn lint
-yarn package    # build the .tgz that can be imported in Companion
+yarn package    # build superflytv-superconductor-<version>.tgz, which can be imported in Companion
 ```
 
 To try a local build, point Companion at the folder that contains this repository

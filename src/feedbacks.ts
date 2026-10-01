@@ -16,7 +16,6 @@ import {
 	type PartTargetOptions,
 } from './options.js'
 import { getGroupLive, getPartLive } from './state.js'
-import { renderKeyDisplay } from './surface.js'
 
 export type FeedbacksSchema = {
 	part_playing: { type: 'boolean'; options: PartTargetOptions }
@@ -31,8 +30,6 @@ export type FeedbacksSchema = {
 	group_paused: { type: 'boolean'; options: GroupTargetOptions }
 	group_ending: { type: 'boolean'; options: GroupTargetOptions & { seconds: number } }
 	group_info: { type: 'value'; options: GroupTargetOptions & { field: string } }
-
-	surface_key: { type: 'advanced'; options: { key: number } }
 }
 
 /** The feedbacks that change when the playout state changes */
@@ -217,29 +214,6 @@ export function UpdateFeedbacks(self: ModuleInstance): void {
 			callback: (feedback) => {
 				const ref = store.resolveGroup(feedback.options.group)
 				return getGroupInfo(ref, feedback.options.field as GroupField, self.now())
-			},
-		},
-
-		surface_key: {
-			type: 'advanced',
-			name: 'Button panel: Key display',
-			description:
-				'Makes the button look like the key on the button panel does in SuperConductor (text, colors and border).',
-			affectedProperties: ['text', 'size', 'color', 'bgcolor', 'imageBuffer'],
-			options: [
-				{
-					id: 'key',
-					type: 'number',
-					label: 'Key (0 is the top left one)',
-					default: 0,
-					min: 0,
-					max: 1023,
-					asInteger: true,
-				},
-			],
-			callback: (feedback) => {
-				const display = self.surfaceKeys.get(Math.floor(Number(feedback.options.key)))
-				return renderKeyDisplay(display, feedback.image)
 			},
 		},
 	})

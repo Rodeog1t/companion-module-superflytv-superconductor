@@ -2,7 +2,6 @@ import type { CompanionVariableDefinitions, CompanionVariableValues } from '@com
 import type ModuleInstance from './main.js'
 import { getGroupInfo, getPartInfo } from './info.js'
 import { getGroupName, getPartName } from './state.js'
-import { getKeyHeader, getKeyInfo } from './surface.js'
 
 /** The variables depend on what is in the rundowns, so they can't be listed in advance */
 export type VariablesSchema = CompanionVariableValues
@@ -36,11 +35,6 @@ export function getVariableDefinitions(self: ModuleInstance): CompanionVariableD
 		definitions[`${id}_time_left_seconds`] = { name: `${label}: Time left, in seconds` }
 	}
 
-	for (let key = 0; key < self.surfaceKeyCount; key++) {
-		definitions[`key_${key}_header`] = { name: `Button panel, key ${key}: Header` }
-		definitions[`key_${key}_info`] = { name: `Button panel, key ${key}: Information` }
-	}
-
 	return definitions
 }
 
@@ -68,12 +62,6 @@ export function getVariableValues(self: ModuleInstance, now: number): CompanionV
 		values[`${id}_status`] = getPartInfo(ref, 'status', now)
 		values[`${id}_time`] = getPartInfo(ref, 'time', now)
 		values[`${id}_time_left_seconds`] = getPartInfo(ref, 'time_left_seconds', now)
-	}
-
-	for (let key = 0; key < self.surfaceKeyCount; key++) {
-		const display = self.surfaceKeys.get(key)
-		values[`key_${key}_header`] = getKeyHeader(display)
-		values[`key_${key}_info`] = getKeyInfo(display)
 	}
 
 	return values

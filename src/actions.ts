@@ -20,13 +20,6 @@ export type ActionsSchema = {
 	group_play_stop: { options: GroupTargetOptions }
 	group_next: { options: GroupTargetOptions }
 	group_previous: { options: GroupTargetOptions }
-
-	surface_key: {
-		options: {
-			key: number
-			pressed: boolean
-		}
-	}
 }
 
 export function UpdateActions(self: ModuleInstance): void {
@@ -100,31 +93,5 @@ export function UpdateActions(self: ModuleInstance): void {
 			'Plays the previous part in a group (only for groups that play one part at a time)',
 			'playPrev',
 		),
-
-		surface_key: {
-			name: 'Button panel: Press or release a key',
-			description:
-				'Tells SuperConductor that a key on the button panel was pressed or released. What the key does is set up in SuperConductor.',
-			options: [
-				{
-					id: 'key',
-					type: 'number',
-					label: 'Key (0 is the top left one)',
-					default: 0,
-					min: 0,
-					max: 1023,
-					asInteger: true,
-				},
-				{
-					id: 'pressed',
-					type: 'checkbox',
-					label: 'Pressed (uncheck to release the key)',
-					default: true,
-				},
-			],
-			callback: async (event) => {
-				self.sendKey(Math.floor(Number(event.options.key)), !!event.options.pressed)
-			},
-		},
 	})
 }
